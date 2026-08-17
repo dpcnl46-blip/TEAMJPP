@@ -206,7 +206,7 @@
                         </div>
                         <span class="text-base font-black">소다</span>
                     </div>
-                    <div class="absolute top-[100px] w-0.5 h-10 bg-gradient-to-b from-amber-500 to-transparent"></div>
+                    <div class="absolute top-[135px] w-0.5 h-10 bg-gradient-to-b from-amber-500 to-transparent"></div>
                 </div>
 
                 <div class="flex justify-center gap-3 sm:gap-6 mb-6" id="defender-slots"></div>
@@ -386,7 +386,6 @@ A. 몰라레후.</p>
                 if (!response.ok) return;
                 const externalData = await response.json();
                 
-                // data.json에 적힌 경로를 기본 이미지로 불러오기
                 if (externalData.sodaImg && !appData.sodaImg) {
                     appData.sodaImg = externalData.sodaImg;
                 }
@@ -473,27 +472,19 @@ A. 몰라레후.</p>
                 
                 rowsHtml += `
                     <div id="ladder-row-${idx}" class="flex items-center justify-between gap-3 mb-3 theme-sub-box p-3 rounded-xl border">
-                        <!-- 좌측 덱 이름 -->
                         <input type="text" value="${item.leftName}" tabindex="${idx + 1}" oninput="updateLadderName(${idx}, 'leftName', this.value)" placeholder="덱 이름" class="flex-1 theme-input border rounded-lg px-3 py-2.5 text-center text-sm sm:text-base font-bold outline-none">
-
-                        <!-- 좌측 버튼 -->
                         <button tabindex="-1" onclick="setWinner(${idx}, 'left')" class="ladder-btn-left-${idx} w-16 sm:w-20 py-2.5 rounded-lg text-center font-black text-xs sm:text-sm transition-all shrink-0 ${leftStyle}">
                             ${leftText}
                         </button>
-
-                        <!-- 우측 버튼 -->
                         <button tabindex="-1" onclick="setWinner(${idx}, 'right')" class="ladder-btn-right-${idx} w-16 sm:w-20 py-2.5 rounded-lg text-center font-black text-xs sm:text-sm transition-all shrink-0 ${rightStyle}">
                             ${rightText}
                         </button>
-
-                        <!-- 우측 덱 이름 -->
                         <input type="text" value="${item.rightName}" tabindex="${idx + 6}" oninput="updateLadderName(${idx}, 'rightName', this.value)" placeholder="덱 이름" class="flex-1 theme-input border rounded-lg px-3 py-2.5 text-center text-sm sm:text-base font-bold outline-none">
                     </div>
                 `;
             });
 
             const html = `
-                <!-- 상단 공격 / 방어 타이틀 입력 영역 -->
                 <div class="flex items-center justify-between gap-3 mb-6 px-1">
                     <div class="flex-1 flex justify-center">
                         <input type="text" value="${appData.ladderTitleLeft || '공격'}" oninput="updateLadderTitle('left', this.value)" class="w-40 sm:w-48 bg-transparent text-center text-2xl sm:text-3xl font-black text-red-500 outline-none border-b-2 border-transparent focus:border-red-500 transition tracking-wide placeholder-red-500/50" placeholder="공격">
@@ -781,7 +772,6 @@ A. 몰라레후.</p>
             const p2Box = document.getElementById('absol-p2-box');
 
             for (let round = 1; round <= 3; round++) {
-                // 1P가 2P에게 발사
                 mLeft.style.opacity = '1';
                 mLeft.style.left = '65%';
                 
@@ -817,7 +807,6 @@ A. 몰라레후.</p>
                 }
                 await sleep(150);
 
-                // 2P가 1P에게 발사
                 mRight.style.opacity = '1';
                 mRight.style.right = '65%';
                 
