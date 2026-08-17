@@ -386,6 +386,27 @@ A. 몰라레후.</p>
             }
         }
 
+        async function loadExternalData() {
+            try {
+                const response = await fetch('./data.json');
+                if (!response.ok) return;
+                const externalData = await response.json();
+                
+                // data.json에 적힌 경로를 기본 이미지로 불러오기
+                if (externalData.sodaImg && !appData.sodaImg) {
+                    appData.sodaImg = externalData.sodaImg;
+                }
+                if (externalData.absolP1Img && !appData.absolP1Img) {
+                    appData.absolP1Img = externalData.absolP1Img;
+                }
+                if (externalData.absolP2Img && !appData.absolP2Img) {
+                    appData.absolP2Img = externalData.absolP2Img;
+                }
+            } catch (e) {
+                console.log("data.json 파일이 없거나 로드할 수 없음 (로컬 기본값 유지)", e);
+            }
+        }
+
         function parseAndApplyData(parsed) {
             if (!parsed || typeof parsed !== 'object') return;
 
@@ -422,8 +443,9 @@ A. 몰라레후.</p>
             try { localStorage.setItem('nikke_sim_data_v8', JSON.stringify(appData)); } catch (e) {}
         }
 
-        function init() {
+        async function init() {
             loadData();
+            await loadExternalData();
             applyTheme();
             renderSodaImage();
             renderSlots();
@@ -782,7 +804,7 @@ A. 몰라레후.</p>
             btn.disabled = true;
             btn.innerText = "🚀 대결 진행 중...";
 
-            const p1Prob = parseFloat(document.getElementById('absol-p1-prob').value) || 23.17;
+            const p1Prob = parseFloat(document.getElementById('absol-p1-prob').value) || 23.16;
             const p2Prob = parseFloat(document.getElementById('absol-p2-prob').value) || 23.16;
 
             for (let r = 1; r <= 3; r++) {
