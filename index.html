@@ -198,14 +198,12 @@
             <!-- 1️⃣ 소다 시뮬레이터 View -->
             <div id="view-soda" class="hidden theme-card p-6 sm:p-10 rounded-2xl border shadow-2xl relative">
                 <div class="flex justify-center mb-12 relative">
-                    <div class="flex flex-col items-center z-10 group">
-                        <label class="w-24 h-24 bg-amber-900 border-2 border-amber-500 rounded-full overflow-hidden flex justify-center items-center mb-3 shadow-[0_0_20px_rgba(245,158,11,0.4)] relative cursor-pointer" title="클릭하여 이미지 변경">
-                            <input type="file" accept="image/*" class="hidden" onchange="updateSodaImage(this)">
-                            <div id="soda-img-container" class="w-full h-full flex justify-center items-center pointer-events-none">
+                    <div class="flex flex-col items-center z-10">
+                        <div class="w-24 h-24 bg-amber-900 border-2 border-amber-500 rounded-full overflow-hidden flex justify-center items-center mb-3 shadow-[0_0_20px_rgba(245,158,11,0.4)] relative">
+                            <div id="soda-img-container" class="w-full h-full flex justify-center items-center">
                                 <span class="text-sm text-amber-200 font-bold">소다</span>
                             </div>
-                            <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-xs text-white font-bold transition-opacity pointer-events-none">변경</div>
-                        </label>
+                        </div>
                         <span class="text-base font-black">소다</span>
                     </div>
                     <div class="absolute top-[100px] w-0.5 h-10 bg-gradient-to-b from-amber-500 to-transparent"></div>
@@ -237,13 +235,11 @@
                         <!-- 1P 니케 -->
                         <div class="flex flex-col items-center w-1/2 z-10 relative">
                             <div id="exp-p1" class="explosion-effect">💥</div>
-                            <label class="w-24 h-24 sm:w-28 sm:h-28 bg-amber-900 border-2 border-amber-500 rounded-full overflow-hidden flex justify-center items-center mb-2 shadow-[0_0_20px_rgba(245,158,11,0.4)] relative cursor-pointer group" id="absol-p1-box">
-                                <input type="file" accept="image/*" class="hidden" onchange="updateAbsolImage(this, 'p1')">
-                                <div id="absol-p1-img" class="w-full h-full flex justify-center items-center pointer-events-none">
+                            <div class="w-24 h-24 sm:w-28 sm:h-28 bg-amber-900 border-2 border-amber-500 rounded-full overflow-hidden flex justify-center items-center mb-2 shadow-[0_0_20px_rgba(245,158,11,0.4)] relative" id="absol-p1-box">
+                                <div id="absol-p1-img" class="w-full h-full flex justify-center items-center">
                                     <span class="text-sm text-amber-200 font-bold">1P 니케</span>
                                 </div>
-                                <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-xs text-white font-bold transition-opacity">변경</div>
-                            </label>
+                            </div>
                             <input type="text" id="absol-p1-name" value="공스티" class="theme-input bg-transparent text-center font-black text-base mb-3 outline-none border-b border-transparent focus:border-amber-400 rounded px-2 py-1">
                             
                             <div class="flex items-center gap-1 mb-4 theme-sub-box px-3 py-1 rounded-lg border">
@@ -262,13 +258,11 @@
                         <!-- 2P 니케 -->
                         <div class="flex flex-col items-center w-1/2 z-10 relative">
                             <div id="exp-p2" class="explosion-effect">💥</div>
-                            <label class="w-24 h-24 sm:w-28 sm:h-28 bg-amber-900 border-2 border-amber-500 rounded-full overflow-hidden flex justify-center items-center mb-2 shadow-[0_0_20px_rgba(245,158,11,0.4)] relative cursor-pointer group" id="absol-p2-box">
-                                <input type="file" accept="image/*" class="hidden" onchange="updateAbsolImage(this, 'p2')">
-                                <div id="absol-p2-img" class="w-full h-full flex justify-center items-center pointer-events-none">
+                            <div class="w-24 h-24 sm:w-28 sm:h-28 bg-amber-900 border-2 border-amber-500 rounded-full overflow-hidden flex justify-center items-center mb-2 shadow-[0_0_20px_rgba(245,158,11,0.4)] relative" id="absol-p2-box">
+                                <div id="absol-p2-img" class="w-full h-full flex justify-center items-center">
                                     <span class="text-sm text-amber-200 font-bold">방스티</span>
                                 </div>
-                                <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-xs text-white font-bold transition-opacity">변경</div>
-                            </label>
+                            </div>
                             <input type="text" id="absol-p2-name" value="방스티" class="theme-input bg-transparent text-center font-black text-base mb-3 outline-none border-b border-transparent focus:border-amber-400 rounded px-2 py-1">
                             
                             <div class="flex items-center gap-1 mb-4 theme-sub-box px-3 py-1 rounded-lg border">
@@ -600,26 +594,6 @@ A. 몰라레후.</p>
             }
         }
 
-        function updateSodaImage(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = new Image();
-                    img.onload = function() {
-                        const canvas = document.createElement('canvas');
-                        canvas.width = 100; canvas.height = 100;
-                        canvas.getContext('2d').drawImage(img, 0, 0, 100, 100);
-                        appData.sodaImg = canvas.toDataURL('image/jpeg', 0.6);
-                        renderSodaImage();
-                        renderAbsolImages();
-                        saveData();
-                    };
-                    img.src = e.target.result;
-                }
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-
         function renderSodaImage() {
             const container = document.getElementById('soda-img-container');
             if (appData.sodaImg) {
@@ -732,26 +706,6 @@ A. 몰라레후.</p>
         }
 
         /* ----- 2. 앱솔 시뮬레이터 로직 ----- */
-        function updateAbsolImage(input, player) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = new Image();
-                    img.onload = function() {
-                        const canvas = document.createElement('canvas');
-                        canvas.width = 120; canvas.height = 120;
-                        canvas.getContext('2d').drawImage(img, 0, 0, 120, 120);
-                        if (player === 'p1') appData.absolP1Img = canvas.toDataURL('image/jpeg', 0.6);
-                        else appData.absolP2Img = canvas.toDataURL('image/jpeg', 0.6);
-                        renderAbsolImages();
-                        saveData();
-                    };
-                    img.src = e.target.result;
-                }
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-
         function renderAbsolImages() {
             const p1Container = document.getElementById('absol-p1-img');
             const p2Container = document.getElementById('absol-p2-img');
