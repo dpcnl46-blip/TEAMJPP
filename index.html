@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>니케 종합 시뮬레이터</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 테마별 변수 및 기본 스타일 */
+        body { font-family: sans-serif; overflow-x: hidden; user-select: none; transition: background-color 0.3s, color 0.3s; }
+        
+        /* ☀️ 라이트 모드 (기본) */
+        body.light-theme { background-color: #f8fafc; color: #1e293b; }
+        body.light-theme .theme-card { background-color: #ffffff; border-color: #e2e8f0; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05); }
+        body.light-theme .theme-sub-box { background-color: #f1f5f9; border-color: #cbd5e1; color: #1e293b; }
+        body.light-theme .theme-input { background-color: #ffffff; color: #0f172a; border-color: #cbd5e1; }
+        body.light-theme .theme-input:focus { border-color: #f59e0b; background-color: #ffffff; }
+        body.light-theme .nav-active { background-color: #ffffff !important; border-color: #f59e0b !important; color: #d97706 !important; }
+        body.light-theme .nav-inactive { background-color: #f1f5f9 !important; border-color: #cbd5e1 !important; color: #64748b !important; }
+        body.light-theme .nav-inactive:hover { border-color: #f59e0b !important; color: #d97706 !important; }
+        body.light-theme .utility-btn { background-color: #e2e8f0; color: #334155; border-color: #cbd5e1; }
+        body.light-theme .utility-btn:hover { background-color: #cbd5e1; }
+
+        /* 🌙 다크 모드 */
+        body.dark-theme { background-color: #0d111a; color: #e6edf3; }
+        body.dark-theme .theme-card { background-color: #161b26; border-color: #24304f; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
+        body.dark-theme .theme-sub-box { background-color: #111622; border-color: #1f293d; color: #e6edf3; }
+        body.dark-theme .theme-input { background-color: #334155; color: #e6edf3; border-color: #475569; }
+        body.dark-theme .theme-input:focus { border-color: #f59e0b; background-color: #475569; }
+        body.dark-theme .nav-active { background-color: #161b26 !important; border-color: #f59e0b !important; color: #fbbf24 !important; }
+        body.dark-theme .nav-inactive { background-color: rgba(22, 27, 38, 0.6) !important; border-color: #374151 !important; color: #9ca3af !important; }
+        body.dark-theme .nav-inactive:hover { border-color: #f59e0b !important; color: #fcd34d !important; }
+        body.dark-theme .utility-btn { background-color: #1f293d; color: #e2e8f0; border-color: #374151; }
+        body.dark-theme .utility-btn:hover { background-color: #374151; }
+
+        .slot-box {
+            width: 80px; height: 80px;
+            border-width: 2px;
+            border-radius: 0.5rem;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: border-color 0.2s, transform 0.2s, background-color 0.2s;
+        }
+        body.light-theme .slot-box { background-color: #f1f5f9; border-color: #cbd5e1; }
+        body.dark-theme .slot-box { background-color: #1a202c; border-color: #24304f; }
+        .slot-box:hover { border-color: #f59e0b !important; }
+
+        .slot-input {
+            position: relative;
+            z-index: 10;
+            width: 90%;
+            background: transparent;
+            text-align: center;
+            font-weight: 900;
+            outline: none;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        }
+        body.light-theme .slot-input { color: #0f172a; text-shadow: none; }
+        body.dark-theme .slot-input { color: #e6edf3; text-shadow: 1px 1px 3px rgba(0,0,0,0.8), -1px -1px 3px rgba(0,0,0,0.8); }
+
+        /* 🌟 인게임 고증 푸른빛 스턴 효과 */
+        .stunned {
+            position: relative;
+            background-color: rgba(34, 211, 238, 0.18) !important;
+            border-color: #22d3ee !important; 
+            box-shadow: 0 0 22px rgba(34, 211, 238, 0.75);
+            transform: scale(0.98);
+        }
+
+        .stunned::after {
+            content: "STUN!";
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg);
+            color: #0891b2; font-size: 1.35rem; font-weight: 900;
+            z-index: 20; pointer-events: none;
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        body.dark-theme .stunned::after { color: #cffafe; text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.9), 0 0 12px rgba(34, 211, 238, 0.9); }
+
+        @keyframes popIn {
+            0% { opacity: 0; transform: translate(-50%, -50%) rotate(-15deg) scale(0.5); }
+            100% { opacity: 1; transform: translate(-50%, -50%) rotate(-15deg) scale(1); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px) rotate(-2deg); }
+            50% { transform: translateX(4px) rotate(2deg); }
+            75% { transform: translateX(-4px) rotate(-2deg); }
+        }
+        .shaking { animation: shake 0.3s ease-in-out; }
+        
+        .fade-in { animation: fadeIn 0.25s ease-in forwards; }
+        .fade-out { animation: fadeOut 0.2s ease-out forwards; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; visibility: hidden; } }
+
+        /* 🚀 직선 런처(미사일) 애니메이션 스타일 */
+        .laser-missile {
+            position: absolute;
+            width: 45px; height: 10px;
+            background: linear-gradient(90deg, #fbbf24, #ef4444);
+            border-radius: 999px;
+            box-shadow: 0 0 15px #f59e0b, inset 0 0 5px #fff;
+            z-index: 40;
+            top: 52px; margin-top: -5px;
+            transition: left 0.35s cubic-bezier(0.4, 0, 0.8, 1), right 0.35s cubic-bezier(0.4, 0, 0.8, 1), opacity 0.1s;
+            opacity: 0;
+        }
+        .laser-missile.left-side { left: 35%; }
+        .laser-missile.right-side { right: 35%; transform: scaleX(-1); }
+
+        .smoke-particle {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 35; 
+            animation: smokeFade 0.45s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+        @keyframes smokeFade {
+            0% { transform: scale(0.6); opacity: 0.9; background: #fbbf24; filter: blur(1px); }
+            35% { background: #ef4444; filter: blur(2px); }
+            70% { background: #6b7280; opacity: 0.5; filter: blur(3px); }
+            100% { transform: scale(2.2); opacity: 0; background: #374151; filter: blur(4px); }
+        }
+
+        .explosion-effect {
+            position: absolute;
+            top: 50px; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 5rem;
+            z-index: 60;
+            pointer-events: none;
+            opacity: 0;
+        }
+        .explode-anim {
+            animation: blast 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes blast {
+            0% { transform: translate(-50%, -50%) scale(0.3) rotate(-20deg); opacity: 1; filter: brightness(2); }
+            50% { transform: translate(-50%, -50%) scale(1.2) rotate(10deg); opacity: 1; filter: brightness(1.5); }
+            100% { transform: translate(-50%, -50%) scale(1.5) rotate(20deg); opacity: 0; }
+        }
+
+        .hit-effect { animation: hitPulse 0.3s ease-out; }
+        @keyframes hitPulse {
+            0% { transform: scale(1); filter: brightness(1); }
+            40% { transform: scale(1.15); filter: brightness(2) drop-shadow(0 0 15px #ef4444); }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
+    </style>
+</head>
+<body class="light-theme min-h-screen p-4 md:p-8 flex flex-col items-center justify-center">
+
+    <!-- 🎬 버스트 컷신 오버레이 -->
+    <div id="burst-overlay" class="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center hidden opacity-0">
+        <video id="burst-video" class="max-w-full max-h-[80vh] object-contain shadow-[0_0_50px_rgba(245,158,11,0.5)] border-y-4 border-amber-500" muted playsinline>
+            <source src="https://i.namu.wiki/i/D0T1UhDu_c0mIUJ88DKPrX3QHtQvUpW2D7Jw7034bGw0pkLenCzLH7edH4l6gp4n06UicsbBeT2Z6mTXQfsMDQ.mp4" type="video/mp4">
+        </video>
+    </div>
+
+    <!-- 전체 레이아웃 -->
+    <div class="max-w-6xl w-full flex flex-col md:flex-row gap-6 items-center justify-center">
+        
+        <!-- 👈 좌측 메뉴 UI -->
+        <div class="w-full md:w-56 flex flex-row md:flex-col gap-3 shrink-0 justify-center">
+            <button id="nav-ladder" onclick="switchTab('ladder')" class="flex-1 md:flex-none p-4 rounded-xl font-black nav-active shadow-lg border-2 transition text-center md:text-left text-base sm:text-lg whitespace-nowrap">
+                🎲 사다리 타기
+            </button>
+            <button id="nav-soda" onclick="switchTab('soda')" class="flex-1 md:flex-none p-4 rounded-xl font-black nav-inactive shadow-lg border-2 transition text-center md:text-left text-base sm:text-lg whitespace-nowrap">
+                ⚡ 소다 시뮬레이터
+            </button>
+            <button id="nav-absol" onclick="switchTab('absol')" class="flex-1 md:flex-none p-4 rounded-xl font-black nav-inactive shadow-lg border-2 transition text-center md:text-left text-base sm:text-lg whitespace-nowrap">
+                🚀 앱솔 시뮬레이터
+            </button>
+        </div>
+
+        <!-- 👉 우측 메인 콘텐츠 영역 -->
+        <div class="flex-1 w-full flex flex-col justify-center">
+            
+            <!-- 상단 헤더 & 백업 / 테마 전환 버튼 -->
+            <div class="flex justify-between items-center mb-6">
+                <h1 id="page-title" class="text-2xl sm:text-3xl font-black text-amber-500">🎲 사다리타기 매칭</h1>
+                <div class="flex gap-2">
+                    <button onclick="toggleTheme()" id="theme-toggle-btn" class="utility-btn text-xs font-bold px-3 py-2 rounded-lg border transition">🌙 다크모드</button>
+                    <button onclick="exportJSON()" class="utility-btn text-xs font-bold px-3 py-2 rounded-lg border transition">💾 내보내기</button>
+                    <label class="utility-btn text-xs font-bold px-3 py-2 rounded-lg border transition cursor-pointer">
+                        📂 불러오기 <input type="file" accept=".json" onchange="importJSON(event)" class="hidden">
+                    </label>
+                </div>
+            </div>
+
+            <!-- 0️⃣ 사다리타기 View (메인 탭) -->
+            <div id="view-ladder" class="theme-card p-6 sm:p-8 rounded-2xl border shadow-2xl relative">
+                <div id="ladder-container-main"></div>
+            </div>
+
+            <!-- 1️⃣ 소다 시뮬레이터 View -->
+            <div id="view-soda" class="hidden theme-card p-6 sm:p-10 rounded-2xl border shadow-2xl relative">
+                <div class="flex justify-center mb-12 relative">
+                    <div class="flex flex-col items-center z-10 group">
+                        <label class="w-24 h-24 bg-amber-900 border-2 border-amber-500 rounded-full overflow-hidden flex justify-center items-center mb-3 shadow-[0_0_20px_rgba(245,158,11,0.4)] relative cursor-pointer" title="클릭하여 이미지 변경">
+                            <input type="file" accept="image/*" class="hidden" onchange="updateSodaImage(this)">
+                            <div id="soda-img-container" class="w-full h-full flex justify-center items-center pointer-events-none">
+                                <span class="text-sm text-amber-200 font-bold">소다</span>
+                            </div>
+                            <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-xs text-white font-bold transition-opacity pointer-events-none">변경</div>
+                        </label>
+                        <span class="text-base font-black">소다</span>
+                    </div>
+                    <div class="absolute top-[100px] w-0.5 h-10 bg-gradient-to-b from-amber-500 to-transparent"></div>
+                </div>
+
+                <div class="flex justify-center gap-3 sm:gap-6 mb-6" id="defender-slots"></div>
+
+                <div id="taunt-status-box" class="text-center mb-8 hidden">
+                    <span id="taunt-status-text" class="inline-block px-4 py-1.5 rounded-full text-sm font-bold bg-amber-500/20 text-amber-600 dark:text-amber-300 border border-amber-500/40 shadow-sm">
+                        🛡️ 도발 니케 감지됨 (스턴 분배 적용)
+                    </span>
+                </div>
+
+                <div class="flex justify-center mt-8">
+                    <button onclick="simulateStun()" id="stun-btn" class="bg-amber-600 hover:bg-amber-500 text-white font-black text-xl px-10 py-4 rounded-xl shadow-[0_5px_0_#92400e] active:translate-y-1 active:shadow-none transition-all">🎯 소다 버스트!</button>
+                </div>
+            </div>
+
+            <!-- 2️⃣ 앱솔 시뮬레이터 View -->
+            <div id="view-absol" class="hidden flex-col gap-4">
+                <div class="theme-card p-6 sm:p-10 rounded-2xl border shadow-2xl relative w-full">
+                    <div class="relative flex justify-between items-start gap-4 mb-8 min-h-[300px]">
+                        
+                        <div id="missile-layer" class="absolute inset-0 pointer-events-none overflow-hidden">
+                            <div id="missile-left" class="laser-missile left-side"></div>
+                            <div id="missile-right" class="laser-missile right-side"></div>
+                        </div>
+
+                        <!-- 1P 니케 -->
+                        <div class="flex flex-col items-center w-1/2 z-10 relative">
+                            <div id="exp-p1" class="explosion-effect">💥</div>
+                            <label class="w-24 h-24 sm:w-28 sm:h-28 bg-amber-900 border-2 border-amber-500 rounded-full overflow-hidden flex justify-center items-center mb-2 shadow-[0_0_20px_rgba(245,158,11,0.4)] relative cursor-pointer group" id="absol-p1-box">
+                                <input type="file" accept="image/*" class="hidden" onchange="updateAbsolImage(this, 'p1')">
+                                <div id="absol-p1-img" class="w-full h-full flex justify-center items-center pointer-events-none">
+                                    <span class="text-sm text-amber-200 font-bold">1P 니케</span>
+                                </div>
+                                <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-xs text-white font-bold transition-opacity">변경</div>
+                            </label>
+                            <input type="text" id="absol-p1-name" value="공스티" class="theme-input bg-transparent text-center font-black text-base mb-3 outline-none border-b border-transparent focus:border-amber-400 rounded px-2 py-1">
+                            
+                            <div class="flex items-center gap-1 mb-4 theme-sub-box px-3 py-1 rounded-lg border">
+                                <input type="number" id="absol-p1-prob" value="23.17" step="0.01" min="0" max="100" class="w-16 bg-transparent text-center font-bold text-amber-500 outline-none">
+                                <span class="text-amber-500 font-bold">%</span>
+                            </div>
+
+                            <div class="w-full max-w-[180px] space-y-1.5 text-center text-sm font-bold mb-4">
+                                <div id="p1-round-1" class="text-gray-400">1회차 크리 <span class="status">-</span></div>
+                                <div id="p1-round-2" class="text-gray-400">2회차 크리 <span class="status">-</span></div>
+                                <div id="p1-round-3" class="text-gray-400">3회차 크리 <span class="status">-</span></div>
+                            </div>
+                            <div id="p1-final" class="text-2xl font-black text-gray-400 mt-2">-</div>
+                        </div>
+
+                        <!-- 2P 니케 -->
+                        <div class="flex flex-col items-center w-1/2 z-10 relative">
+                            <div id="exp-p2" class="explosion-effect">💥</div>
+                            <label class="w-24 h-24 sm:w-28 sm:h-28 bg-amber-900 border-2 border-amber-500 rounded-full overflow-hidden flex justify-center items-center mb-2 shadow-[0_0_20px_rgba(245,158,11,0.4)] relative cursor-pointer group" id="absol-p2-box">
+                                <input type="file" accept="image/*" class="hidden" onchange="updateAbsolImage(this, 'p2')">
+                                <div id="absol-p2-img" class="w-full h-full flex justify-center items-center pointer-events-none">
+                                    <span class="text-sm text-amber-200 font-bold">방스티</span>
+                                </div>
+                                <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-xs text-white font-bold transition-opacity">변경</div>
+                            </label>
+                            <input type="text" id="absol-p2-name" value="방스티" class="theme-input bg-transparent text-center font-black text-base mb-3 outline-none border-b border-transparent focus:border-amber-400 rounded px-2 py-1">
+                            
+                            <div class="flex items-center gap-1 mb-4 theme-sub-box px-3 py-1 rounded-lg border">
+                                <input type="number" id="absol-p2-prob" value="23.16" step="0.01" min="0" max="100" class="w-16 bg-transparent text-center font-bold text-amber-500 outline-none">
+                                <span class="text-amber-500 font-bold">%</span>
+                            </div>
+
+                            <div class="w-full max-w-[180px] space-y-1.5 text-center text-sm font-bold mb-4">
+                                <div id="p2-round-1" class="text-gray-400">1회차 크리 <span class="status">-</span></div>
+                                <div id="p2-round-2" class="text-gray-400">2회차 크리 <span class="status">-</span></div>
+                                <div id="p2-round-3" class="text-gray-400">3회차 크리 <span class="status">-</span></div>
+                            </div>
+                            <div id="p2-final" class="text-2xl font-black text-gray-400 mt-2">-</div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center mt-6">
+                        <button onclick="startAbsolBattle()" id="absol-btn" class="bg-amber-600 hover:bg-amber-500 text-white font-black text-xl px-10 py-4 rounded-xl shadow-[0_5px_0_#92400e] active:translate-y-1 active:shadow-none transition-all flex items-center gap-2">
+                            💥 대결 시작!
+                        </button>
+                    </div>
+                </div>
+
+                <div id="absol-comment" class="px-2 pt-2">
+                    <p class="text-sm font-medium leading-relaxed whitespace-pre-wrap font-serif opacity-80">Q. 이 승부 방식에 무슨 근거가 있나요?
+A. 몰라레후.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const TAUNT_NAMES = ['노이즈', '목단', '노아'];
+
+        let appData = {
+            theme: "light",
+            sodaImg: "",
+            defenders: ["", "", "", "", ""],
+            absolP1Img: "",
+            absolP2Img: "",
+            hasShuffled: false,
+            ladderTitleLeft: "공격",
+            ladderTitleRight: "방어",
+            ladder: [
+                { leftName: "", rightName: "", winner: null },
+                { leftName: "", rightName: "", winner: null },
+                { leftName: "", rightName: "", winner: null },
+                { leftName: "", rightName: "", winner: null },
+                { leftName: "", rightName: "", winner: null }
+            ]
+        };
+
+        function switchTab(tab) {
+            const ladderView = document.getElementById('view-ladder');
+            const sodaView = document.getElementById('view-soda');
+            const absolView = document.getElementById('view-absol');
+            const navLadder = document.getElementById('nav-ladder');
+            const navSoda = document.getElementById('nav-soda');
+            const navAbsol = document.getElementById('nav-absol');
+            const title = document.getElementById('page-title');
+
+            ladderView.classList.add('hidden');
+            sodaView.classList.add('hidden');
+            absolView.classList.add('hidden');
+            absolView.classList.remove('flex');
+
+            navLadder.className = "flex-1 md:flex-none p-4 rounded-xl font-black nav-inactive shadow-lg border-2 transition text-center md:text-left text-base sm:text-lg whitespace-nowrap";
+            navSoda.className = "flex-1 md:flex-none p-4 rounded-xl font-black nav-inactive shadow-lg border-2 transition text-center md:text-left text-base sm:text-lg whitespace-nowrap";
+            navAbsol.className = "flex-1 md:flex-none p-4 rounded-xl font-black nav-inactive shadow-lg border-2 transition text-center md:text-left text-base sm:text-lg whitespace-nowrap";
+
+            if (tab === 'ladder') {
+                ladderView.classList.remove('hidden');
+                navLadder.className = "flex-1 md:flex-none p-4 rounded-xl font-black nav-active shadow-lg border-2 transition text-center md:text-left text-base sm:text-lg whitespace-nowrap";
+                title.innerText = "🎲 사다리타기 매칭";
+            } else if (tab === 'soda') {
+                sodaView.classList.remove('hidden');
+                navSoda.className = "flex-1 md:flex-none p-4 rounded-xl font-black nav-active shadow-lg border-2 transition text-center md:text-left text-base sm:text-lg whitespace-nowrap";
+                title.innerText = "⚡ 소다 시뮬레이터";
+            } else {
+                absolView.classList.remove('hidden');
+                absolView.classList.add('flex');
+                navAbsol.className = "flex-1 md:flex-none p-4 rounded-xl font-black nav-active shadow-lg border-2 transition text-center md:text-left text-base sm:text-lg whitespace-nowrap";
+                title.innerText = "🚀 앱솔 시뮬레이터";
+            }
+        }
+
+        function toggleTheme() {
+            appData.theme = appData.theme === 'dark' ? 'light' : 'dark';
+            saveData();
+            applyTheme();
+        }
+
+        function applyTheme() {
+            const body = document.body;
+            const themeBtn = document.getElementById('theme-toggle-btn');
+            if (appData.theme === 'dark') {
+                body.classList.remove('light-theme');
+                body.classList.add('dark-theme');
+                themeBtn.innerText = "☀️ 라이트모드";
+            } else {
+                body.classList.remove('dark-theme');
+                body.classList.add('light-theme');
+                themeBtn.innerText = "🌙 다크모드";
+            }
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('nikke_sim_data_v8');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    parseAndApplyData(parsed);
+                } catch (e) { console.error("로드 실패:", e); }
+            }
+        }
+
+        function parseAndApplyData(parsed) {
+            if (!parsed || typeof parsed !== 'object') return;
+
+            if (parsed.theme !== undefined) appData.theme = parsed.theme;
+            if (parsed.sodaImg !== undefined) appData.sodaImg = parsed.sodaImg;
+            if (parsed.defenders && Array.isArray(parsed.defenders)) appData.defenders = parsed.defenders;
+            if (parsed.absolP1Img !== undefined) appData.absolP1Img = parsed.absolP1Img;
+            if (parsed.absolP2Img !== undefined) appData.absolP2Img = parsed.absolP2Img;
+            if (parsed.hasShuffled !== undefined) appData.hasShuffled = parsed.hasShuffled;
+            if (parsed.ladderTitleLeft !== undefined) appData.ladderTitleLeft = parsed.ladderTitleLeft;
+            if (parsed.ladderTitleRight !== undefined) appData.ladderTitleRight = parsed.ladderTitleRight;
+
+            if (parsed.ladder && Array.isArray(parsed.ladder)) {
+                appData.ladder = parsed.ladder.map((item) => {
+                    if (typeof item === 'string') {
+                        return { leftName: item, rightName: "", winner: null };
+                    }
+                    return {
+                        leftName: item.leftName !== undefined ? item.leftName : (item.left || ""),
+                        rightName: item.rightName !== undefined ? item.rightName : (item.right || ""),
+                        winner: item.winner !== undefined ? item.winner : null
+                    };
+                });
+                while (appData.ladder.length < 5) {
+                    appData.ladder.push({ leftName: "", rightName: "", winner: null });
+                }
+                if (appData.ladder.length > 5) {
+                    appData.ladder = appData.ladder.slice(0, 5);
+                }
+            }
+        }
+
+        function saveData() {
+            try { localStorage.setItem('nikke_sim_data_v8', JSON.stringify(appData)); } catch (e) {}
+        }
+
+        function init() {
+            loadData();
+            applyTheme();
+            renderSodaImage();
+            renderSlots();
+            renderAbsolImages();
+            renderLadderUI();
+        }
+
+        /* ----- 사다리타기 매칭 로직 ----- */
+        function renderLadderUI() {
+            let rowsHtml = '';
+            appData.ladder.forEach((item, idx) => {
+                let leftText = "WIN";
+                let leftStyle = "theme-sub-box border hover:border-gray-400";
+                if (item.winner === 'left') {
+                    leftText = "WIN";
+                    leftStyle = "text-cyan-600 dark:text-cyan-400 bg-cyan-100 dark:bg-cyan-950/40 border border-cyan-500/60 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)] scale-105 font-black";
+                } else if (item.winner === 'right') {
+                    leftText = "LOSS";
+                    leftStyle = "text-rose-600 dark:text-rose-500 bg-rose-100 dark:bg-rose-950/40 border border-rose-500/60 font-black";
+                }
+
+                let rightText = "WIN";
+                let rightStyle = "theme-sub-box border hover:border-gray-400";
+                if (item.winner === 'right') {
+                    rightText = "WIN";
+                    rightStyle = "text-cyan-600 dark:text-cyan-400 bg-cyan-100 dark:bg-cyan-950/40 border border-cyan-500/60 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)] scale-105 font-black";
+                } else if (item.winner === 'left') {
+                    rightText = "LOSS";
+                    rightStyle = "text-rose-600 dark:text-rose-500 bg-rose-100 dark:bg-rose-950/40 border border-rose-500/60 font-black";
+                }
+                
+                rowsHtml += `
+                    <div id="ladder-row-${idx}" class="flex items-center justify-between gap-3 mb-3 theme-sub-box p-3 rounded-xl border">
+                        <!-- 좌측 덱 이름 -->
+                        <input type="text" value="${item.leftName}" tabindex="${idx + 1}" oninput="updateLadderName(${idx}, 'leftName', this.value)" placeholder="덱 이름" class="flex-1 theme-input border rounded-lg px-3 py-2.5 text-center text-sm sm:text-base font-bold outline-none">
+
+                        <!-- 좌측 버튼 -->
+                        <button tabindex="-1" onclick="setWinner(${idx}, 'left')" class="ladder-btn-left-${idx} w-16 sm:w-20 py-2.5 rounded-lg text-center font-black text-xs sm:text-sm transition-all shrink-0 ${leftStyle}">
+                            ${leftText}
+                        </button>
+
+                        <!-- 우측 버튼 -->
+                        <button tabindex="-1" onclick="setWinner(${idx}, 'right')" class="ladder-btn-right-${idx} w-16 sm:w-20 py-2.5 rounded-lg text-center font-black text-xs sm:text-sm transition-all shrink-0 ${rightStyle}">
+                            ${rightText}
+                        </button>
+
+                        <!-- 우측 덱 이름 -->
+                        <input type="text" value="${item.rightName}" tabindex="${idx + 6}" oninput="updateLadderName(${idx}, 'rightName', this.value)" placeholder="덱 이름" class="flex-1 theme-input border rounded-lg px-3 py-2.5 text-center text-sm sm:text-base font-bold outline-none">
+                    </div>
+                `;
+            });
+
+            const html = `
+                <!-- 상단 공격 / 방어 타이틀 입력 영역 -->
+                <div class="flex items-center justify-between gap-3 mb-6 px-1">
+                    <div class="flex-1 flex justify-center">
+                        <input type="text" value="${appData.ladderTitleLeft || '공격'}" oninput="updateLadderTitle('left', this.value)" class="w-40 sm:w-48 bg-transparent text-center text-2xl sm:text-3xl font-black text-red-500 outline-none border-b-2 border-transparent focus:border-red-500 transition tracking-wide placeholder-red-500/50" placeholder="공격">
+                    </div>
+                    <div class="w-16 sm:w-20 shrink-0"></div>
+                    <div class="w-16 sm:w-20 shrink-0"></div>
+                    <div class="flex-1 flex justify-center">
+                        <input type="text" value="${appData.ladderTitleRight || '방어'}" oninput="updateLadderTitle('right', this.value)" class="w-40 sm:w-48 bg-transparent text-center text-2xl sm:text-3xl font-black text-blue-500 outline-none border-b-2 border-transparent focus:border-blue-500 transition tracking-wide placeholder-blue-500/50" placeholder="방어">
+                    </div>
+                </div>
+
+                ${rowsHtml}
+                <div class="flex justify-center gap-3 mt-6">
+                    <button onclick="shuffleLadder()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs sm:text-sm px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl shadow-[0_3px_0_#92400e] active:translate-y-1 active:shadow-none transition-all">
+                        덱 무작위 셔플
+                    </button>
+                    ${appData.hasShuffled ? `
+                    <button onclick="resetDeckNames()" class="utility-btn font-bold text-xs sm:text-sm px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl shadow transition-all border">
+                        덱 이름 초기화
+                    </button>` : ''}
+                </div>
+            `;
+            document.getElementById('ladder-container-main').innerHTML = html;
+        }
+
+        function updateLadderTitle(side, val) {
+            if (side === 'left') appData.ladderTitleLeft = val;
+            else appData.ladderTitleRight = val;
+            saveData();
+        }
+
+        function updateLadderName(idx, field, val) {
+            appData.ladder[idx][field] = val;
+            saveData();
+        }
+
+        function setWinner(idx, side) {
+            appData.ladder[idx].winner = side;
+            saveData();
+            renderLadderUI();
+        }
+
+        function shuffleLadder() {
+            appData.hasShuffled = true;
+
+            let leftPool = appData.ladder.map(item => item.leftName);
+            let rightPool = appData.ladder.map(item => item.rightName);
+
+            leftPool.sort(() => Math.random() - 0.5);
+            rightPool.sort(() => Math.random() - 0.5);
+
+            appData.ladder.forEach((item, idx) => {
+                item.leftName = leftPool[idx];
+                item.rightName = rightPool[idx];
+                item.winner = null;
+            });
+
+            saveData();
+            renderLadderUI();
+        }
+
+        function resetDeckNames() {
+            appData.ladder.forEach(item => {
+                item.leftName = "";
+                item.rightName = "";
+                item.winner = null;
+            });
+            appData.hasShuffled = false;
+            saveData();
+            renderLadderUI();
+        }
+
+        /* ----- 1. 소다 스턴 로직 ----- */
+        function checkTauntCondition() {
+            const statusBox = document.getElementById('taunt-status-box');
+            const statusText = document.getElementById('taunt-status-text');
+            let tauntCount = 0;
+            appData.defenders.forEach(name => {
+                if (name) {
+                    const cleanName = name.replace(/\s+/g, '');
+                    if (TAUNT_NAMES.includes(cleanName)) tauntCount++;
+                }
+            });
+
+            if (tauntCount >= 3) {
+                statusBox.classList.remove('hidden');
+                statusText.className = "inline-block px-4 py-1.5 rounded-full text-sm font-bold bg-red-500/20 text-red-600 dark:text-red-300 border border-red-500/40 shadow-sm";
+                statusText.innerHTML = "🚫 노이즈, 목단, 노아 3명 동시 기용은 금지되어 있습니다!";
+                return 'FORBIDDEN';
+            } else if (tauntCount > 0) {
+                statusBox.classList.remove('hidden');
+                statusText.className = "inline-block px-4 py-1.5 rounded-full text-sm font-bold bg-amber-500/20 text-amber-600 dark:text-amber-300 border border-amber-500/40 shadow-sm";
+                statusText.innerHTML = `🛡️ 도발 니케 ${tauntCount}명 감지됨 (스턴 분배 적용)`;
+                return 'ACTIVE';
+            } else {
+                statusBox.classList.add('hidden');
+                return 'NONE';
+            }
+        }
+
+        function updateSodaImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 100; canvas.height = 100;
+                        canvas.getContext('2d').drawImage(img, 0, 0, 100, 100);
+                        appData.sodaImg = canvas.toDataURL('image/jpeg', 0.6);
+                        renderSodaImage();
+                        renderAbsolImages();
+                        saveData();
+                    };
+                    img.src = e.target.result;
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function renderSodaImage() {
+            const container = document.getElementById('soda-img-container');
+            if (appData.sodaImg) {
+                container.innerHTML = `<img src="${appData.sodaImg}" class="w-full h-full object-cover pointer-events-none">`;
+            } else {
+                container.innerHTML = `<span class="text-sm font-bold">소다</span>`;
+            }
+        }
+
+        function renderSlots() {
+            const container = document.getElementById('defender-slots');
+            container.innerHTML = '';
+            for (let i = 0; i < 5; i++) {
+                const nameVal = appData.defenders[i] || "";
+                const slot = document.createElement('div');
+                slot.className = `slot-box group`;
+                slot.id = `slot-${i}`;
+                slot.innerHTML = `
+                    <input type="text" class="slot-input text-base placeholder-gray-400" placeholder="이름" value="${nameVal}" oninput="updateDefenderName(${i}, this.value)">
+                    <button tabindex="-1" class="absolute -top-2 -right-2 bg-rose-600 hover:bg-rose-500 text-white rounded-full w-5 h-5 text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20 shadow-lg" onclick="clearDefender(${i})">✕</button>
+                `;
+                container.appendChild(slot);
+            }
+            checkTauntCondition();
+        }
+
+        function updateDefenderName(idx, name) {
+            appData.defenders[idx] = name;
+            saveData();
+            checkTauntCondition();
+        }
+
+        function clearDefender(idx) {
+            appData.defenders[idx] = "";
+            renderSlots();
+            saveData();
+        }
+
+        function clearStuns() {
+            for (let i = 0; i < 5; i++) {
+                const slotEl = document.getElementById(`slot-${i}`);
+                if (slotEl) slotEl.classList.remove('stunned');
+            }
+        }
+
+        function simulateStun() {
+            if (checkTauntCondition() === 'FORBIDDEN') {
+                alert("노이즈, 목단, 노아 3명을 모두 기용하는 조합은 시뮬레이션이 금지되어 있습니다!");
+                return;
+            }
+            const occupiedIndices = [];
+            appData.defenders.forEach((name, idx) => { if (name.trim() !== "") occupiedIndices.push(idx); });
+            if (occupiedIndices.length === 0) {
+                alert("방어자 이름을 최소 1명 이상 입력해주세요!");
+                return;
+            }
+
+            clearStuns();
+            const btn = document.getElementById('stun-btn');
+            const overlay = document.getElementById('burst-overlay');
+            const video = document.getElementById('burst-video');
+            
+            btn.disabled = true;
+            btn.innerHTML = "🎬 스킬 시전 중...";
+            
+            video.currentTime = 0;
+            video.play().catch(err => console.log("재생 오류:", err));
+
+            overlay.classList.remove('hidden', 'fade-out');
+            overlay.classList.add('fade-in');
+
+            setTimeout(() => {
+                overlay.classList.remove('fade-in');
+                overlay.classList.add('fade-out');
+                video.pause();
+                
+                const container = document.getElementById('defender-slots');
+                container.classList.remove('shaking');
+                void container.offsetWidth; 
+                container.classList.add('shaking');
+
+                let tauntIndices = [], normalIndices = [];
+                occupiedIndices.forEach(idx => {
+                    const cleanName = appData.defenders[idx].replace(/\s+/g, '');
+                    if (TAUNT_NAMES.includes(cleanName)) tauntIndices.push(idx);
+                    else normalIndices.push(idx);
+                });
+
+                let targets = [], needed = Math.min(2, occupiedIndices.length);
+                let chosenTaunt = [...tauntIndices].sort(() => 0.5 - Math.random()).slice(0, needed);
+                targets = [...chosenTaunt];
+
+                if (targets.length < needed) {
+                    let chosenNormal = [...normalIndices].sort(() => 0.5 - Math.random()).slice(0, needed - targets.length);
+                    targets = [...targets, ...chosenNormal];
+                }
+
+                targets.forEach(index => {
+                    const slotEl = document.getElementById(`slot-${index}`);
+                    if (slotEl) slotEl.classList.add('stunned');
+                });
+
+                setTimeout(() => {
+                    overlay.classList.add('hidden');
+                    btn.disabled = false;
+                    btn.innerHTML = "🎯 다시 돌리기!";
+                }, 200); 
+
+            }, 2400); 
+        }
+
+        /* ----- 2. 앱솔 시뮬레이터 로직 ----- */
+        function updateAbsolImage(input, player) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 120; canvas.height = 120;
+                        canvas.getContext('2d').drawImage(img, 0, 0, 120, 120);
+                        if (player === 'p1') appData.absolP1Img = canvas.toDataURL('image/jpeg', 0.6);
+                        else appData.absolP2Img = canvas.toDataURL('image/jpeg', 0.6);
+                        renderAbsolImages();
+                        saveData();
+                    };
+                    img.src = e.target.result;
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function renderAbsolImages() {
+            const p1Container = document.getElementById('absol-p1-img');
+            const p2Container = document.getElementById('absol-p2-img');
+            
+            const p1Source = appData.absolP1Img || appData.sodaImg;
+            if (p1Source) {
+                p1Container.innerHTML = `<img src="${p1Source}" class="w-full h-full object-cover pointer-events-none">`;
+            }
+            if (appData.absolP2Img) {
+                p2Container.innerHTML = `<img src="${appData.absolP2Img}" class="w-full h-full object-cover pointer-events-none">`;
+            }
+        }
+
+        let isFiring = false;
+        function spawnSmoke(missileEl, isLeftToRight) {
+            if (!isFiring) return;
+            
+            const layer = document.getElementById('missile-layer');
+            const rect = missileEl.getBoundingClientRect();
+            const layerRect = layer.getBoundingClientRect();
+            
+            for (let i = 0; i < 2; i++) {
+                const smoke = document.createElement('div');
+                smoke.className = 'smoke-particle';
+                
+                const size = Math.random() * 10 + 8;
+                smoke.style.width = size + 'px';
+                smoke.style.height = size + 'px';
+                
+                let x = isLeftToRight ? (rect.left - layerRect.left) : (rect.right - layerRect.left - size);
+                let y = rect.top - layerRect.top + (rect.height / 2) - (size / 2);
+                
+                x += (Math.random() - 0.5) * 8;
+                y += (Math.random() - 0.5) * 4;
+                
+                smoke.style.left = x + 'px';
+                smoke.style.top = y + 'px';
+                
+                layer.appendChild(smoke);
+                setTimeout(() => smoke.remove(), 450);
+            }
+            
+            requestAnimationFrame(() => spawnSmoke(missileEl, isLeftToRight));
+        }
+
+        const sleep = ms => new Promise(res => setTimeout(res, ms));
+
+        async function startAbsolBattle() {
+            const btn = document.getElementById('absol-btn');
+            btn.disabled = true;
+            btn.innerText = "🚀 대결 진행 중...";
+
+            const p1Prob = parseFloat(document.getElementById('absol-p1-prob').value) || 23.17;
+            const p2Prob = parseFloat(document.getElementById('absol-p2-prob').value) || 23.16;
+
+            for (let r = 1; r <= 3; r++) {
+                const el1 = document.getElementById(`p1-round-${r}`);
+                const el2 = document.getElementById(`p2-round-${r}`);
+                el1.className = "text-gray-400"; el1.innerHTML = `${r}회차 크리 <span class="status">-</span>`;
+                el2.className = "text-gray-400"; el2.innerHTML = `${r}회차 크리 <span class="status">-</span>`;
+            }
+            document.getElementById('p1-final').className = "text-2xl font-black text-gray-400 mt-2";
+            document.getElementById('p1-final').innerText = "-";
+            document.getElementById('p2-final').className = "text-2xl font-black text-gray-400 mt-2";
+            document.getElementById('p2-final').innerText = "-";
+
+            let p1Crits = 0;
+            let p2Crits = 0;
+
+            const mLeft = document.getElementById('missile-left');
+            const mRight = document.getElementById('missile-right');
+            const p1Box = document.getElementById('absol-p1-box');
+            const p2Box = document.getElementById('absol-p2-box');
+
+            for (let round = 1; round <= 3; round++) {
+                // 1P가 2P에게 발사
+                mLeft.style.opacity = '1';
+                mLeft.style.left = '65%';
+                
+                isFiring = true;
+                spawnSmoke(mLeft, true);
+                
+                await sleep(350);
+                isFiring = false;
+                
+                mLeft.style.opacity = '0';
+                mLeft.style.left = '35%';
+
+                const isP1Crit = (Math.random() * 100) <= p1Prob;
+                if (isP1Crit) p1Crits++;
+
+                if (isP1Crit) {
+                    p2Box.classList.add('hit-effect');
+                    const expP2 = document.getElementById('exp-p2');
+                    expP2.classList.remove('explode-anim');
+                    void expP2.offsetWidth;
+                    expP2.classList.add('explode-anim');
+                }
+
+                const p1El = document.getElementById(`p1-round-${round}`);
+                p1El.className = isP1Crit ? "text-cyan-600 dark:text-cyan-400 font-bold" : "text-rose-600 dark:text-rose-500 font-bold";
+                p1El.innerHTML = `${round}회차 크리 <span class="status">${isP1Crit ? '성공' : '실패'}</span>`;
+                
+                if (isP1Crit) {
+                    await sleep(250);
+                    p2Box.classList.remove('hit-effect');
+                } else {
+                    await sleep(250);
+                }
+                await sleep(150);
+
+                // 2P가 1P에게 발사
+                mRight.style.opacity = '1';
+                mRight.style.right = '65%';
+                
+                isFiring = true;
+                spawnSmoke(mRight, false);
+
+                await sleep(350);
+                isFiring = false;
+
+                mRight.style.opacity = '0';
+                mRight.style.right = '35%';
+
+                const isP2Crit = (Math.random() * 100) <= p2Prob;
+                if (isP2Crit) p2Crits++;
+
+                if (isP2Crit) {
+                    p1Box.classList.add('hit-effect');
+                    const expP1 = document.getElementById('exp-p1');
+                    expP1.classList.remove('explode-anim');
+                    void expP1.offsetWidth;
+                    expP1.classList.add('explode-anim');
+                }
+
+                const p2El = document.getElementById(`p2-round-${round}`);
+                p2El.className = isP2Crit ? "text-cyan-600 dark:text-cyan-400 font-bold" : "text-rose-600 dark:text-rose-500 font-bold";
+                p2El.innerHTML = `${round}회차 크리 <span class="status">${isP2Crit ? '성공' : '실패'}</span>`;
+
+                if (isP2Crit) {
+                    await sleep(250);
+                    p1Box.classList.remove('hit-effect');
+                } else {
+                    await sleep(250);
+                }
+                await sleep(300);
+            }
+
+            const p1Final = document.getElementById('p1-final');
+            const p2Final = document.getElementById('p2-final');
+
+            if (p1Crits > p2Crits) {
+                p1Final.innerText = "승리"; p1Final.className = "text-3xl font-black text-cyan-600 dark:text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]";
+                p2Final.innerText = "패배"; p2Final.className = "text-3xl font-black text-rose-600 dark:text-rose-500";
+            } else if (p2Crits > p1Crits) {
+                p1Final.innerText = "패배"; p1Final.className = "text-3xl font-black text-rose-600 dark:text-rose-500";
+                p2Final.innerText = "승리"; p2Final.className = "text-3xl font-black text-cyan-600 dark:text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]";
+            } else {
+                p1Final.innerText = "무승부"; p1Final.className = "text-2xl font-black text-amber-500";
+                p2Final.innerText = "무승부"; p2Final.className = "text-2xl font-black text-amber-500";
+            }
+
+            btn.disabled = false;
+            btn.innerText = "💥 다시 대결하기!";
+        }
+
+        /* JSON 내보내기 / 불러오기 */
+        function exportJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "nikke_simulator_backup.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function importJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (!parsed || typeof parsed !== 'object') {
+                        throw new Error("올바른 JSON 데이터 형식이 아닙니다.");
+                    }
+                    parseAndApplyData(parsed);
+                    saveData();
+                    init();
+                    alert("✅ 백업 파일을 성공적으로 불러왔습니다!");
+                } catch (err) { 
+                    console.error("JSON 로드 오류:", err);
+                    alert(`❌ 파일 불러오기 실패\n올바른 백업 파일이 아니거나 손상된 파일입니다.\n\n[오류 내용]\n${err.message}`); 
+                } finally {
+                    event.target.value = '';
+                }
+            };
+            reader.onerror = function() {
+                alert("❌ 파일을 읽는 중 오류가 발생했습니다.");
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        init();
+    </script>
+</body>
+</html>
