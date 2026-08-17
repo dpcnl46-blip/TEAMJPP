@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>페비의 놀이터</title>
+    <title>니케 종합 시뮬레이터</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* 테마별 변수 및 기본 스타일 */
@@ -182,15 +182,11 @@
         <!-- 👉 우측 메인 콘텐츠 영역 -->
         <div class="flex-1 w-full flex flex-col justify-center">
             
-            <!-- 상단 헤더 & 백업 / 테마 전환 버튼 -->
+            <!-- 상단 헤더 & 테마 전환 버튼 -->
             <div class="flex justify-between items-center mb-6">
                 <h1 id="page-title" class="text-2xl sm:text-3xl font-black text-amber-500">🎲 사다리타기 매칭</h1>
                 <div class="flex gap-2">
                     <button onclick="toggleTheme()" id="theme-toggle-btn" class="utility-btn text-xs font-bold px-3 py-2 rounded-lg border transition">🌙 다크모드</button>
-                    <button onclick="exportJSON()" class="utility-btn text-xs font-bold px-3 py-2 rounded-lg border transition">💾 내보내기</button>
-                    <label class="utility-btn text-xs font-bold px-3 py-2 rounded-lg border transition cursor-pointer">
-                        📂 불러오기 <input type="file" accept=".json" onchange="importJSON(event)" class="hidden">
-                    </label>
                 </div>
             </div>
 
@@ -898,45 +894,6 @@ A. 몰라레후.</p>
 
             btn.disabled = false;
             btn.innerText = "💥 다시 대결하기!";
-        }
-
-        /* JSON 내보내기 / 불러오기 */
-        function exportJSON() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
-            const downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", "nikke_simulator_backup.json");
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
-        }
-
-        function importJSON(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const parsed = JSON.parse(e.target.result);
-                    if (!parsed || typeof parsed !== 'object') {
-                        throw new Error("올바른 JSON 데이터 형식이 아닙니다.");
-                    }
-                    parseAndApplyData(parsed);
-                    saveData();
-                    init();
-                    alert("✅ 백업 파일을 성공적으로 불러왔습니다!");
-                } catch (err) { 
-                    console.error("JSON 로드 오류:", err);
-                    alert(`❌ 파일 불러오기 실패\n올바른 백업 파일이 아니거나 손상된 파일입니다.\n\n[오류 내용]\n${err.message}`); 
-                } finally {
-                    event.target.value = '';
-                }
-            };
-            reader.onerror = function() {
-                alert("❌ 파일을 읽는 중 오류가 발생했습니다.");
-                event.target.value = '';
-            };
-            reader.readAsText(file);
         }
 
         init();
